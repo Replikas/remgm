@@ -363,7 +363,7 @@ async function callChuteAI(message, character, affectionLevel, userId, character
       beta_use_thinking: false
     }, {
       headers: {
-        'Authorization': `Bearer ${process.env.CHUTE_AI_API_KEY}`,
+        'Authorization': `Bearer ${process.env.CHUTES_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
@@ -498,7 +498,10 @@ io.on('connection', (socket) => {
     const { message, characterId, useVoice } = data;
     const character = characters[characterId];
     
+    console.log(`Received chat message for character ${characterId}: ${message}, useVoice: ${useVoice}`);
+
     if (!character) {
+      console.error(`Invalid character selected: ${characterId}`);
       socket.emit('error', 'Invalid character selected');
       return;
     }
@@ -510,8 +513,10 @@ io.on('connection', (socket) => {
     const currentAffection = userAffection.get(socket.id)[characterId];
     
     // Generate AI response with conversation history
+    console.log(`Calling Chute.ai for response for character ${characterId}...`);
     const aiResponse = await callChuteAI(message, character, currentAffection, socket.id, characterId);
-    
+    console.log(`AI Response: ${aiResponse}`);
+
     // Save conversation to history
     addToConversationHistory(socket.id, characterId, message, aiResponse);
     
@@ -519,7 +524,9 @@ io.on('connection', (socket) => {
     let voiceData = null;
     if (useVoice) {
       try {
+        console.log(`Generating voice for character ${characterId}...`);
         voiceData = await generateVoice(aiResponse, characterId);
+        console.log(`Voice data generated: ${voiceData ? 'Yes' : 'No'}`);
       } catch (error) {
         console.error('Voice generation failed:', error);
         // Continue without voice
@@ -596,15 +603,15 @@ io.on('connection', (socket) => {
     const mood = getMood(newAffection);
     
     // Send response with voice data if available
+    console.log(`Emitting ai-response for character ${characterId}. Voice data present: ${voiceData ? 'Yes' : 'No'}.`);
     socket.emit('ai-response', {
       message: aiResponse,
       character: character.name,
       avatar: character.avatar,
-      color: character.color,
       affection: newAffection,
       affectionChange: affectionChange,
       mood: mood,
-      voiceData: voiceData ? voiceData.toString('base64') : null
+      voice: voiceData ? Buffer.from(voiceData).toString('base64') : null // Convert buffer to base64 for client
     });
     
     // Send updated affection levels
