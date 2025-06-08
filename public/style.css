@@ -599,16 +599,51 @@ body::before {
     box-shadow: 0 6px 15px rgba(0, 255, 136, 0.6);
 }
 
-/* Common transitions and animations (if any) */
+/* Typing Indicator */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background: rgba(0, 255, 136, 0.08);
+    border-radius: 12px;
+    margin: 0.75rem 0;
+    width: fit-content;
+    animation: messageSlide 0.3s ease-out;
+    border: 1px solid rgba(0, 255, 136, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.typing-indicator span {
+    height: 8px;
+    width: 8px;
+    background: var(--portal-green);
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 2px;
+    animation: typing 1.4s infinite ease-in-out;
+    box-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+}
+
+.typing-indicator span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.7; }
+    40% { transform: scale(1.1); opacity: 1; }
+}
+
 @keyframes messageSlide {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 /* Info Panel (if used) */
