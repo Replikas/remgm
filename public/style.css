@@ -489,18 +489,27 @@ body::before {
 }
 
 .message.ai .message-content {
-    position: relative;
-    padding-left: 50px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 5px;
+    border: 2px solid var(--portal-green);
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+    flex-shrink: 0; /* Prevent shrinking on smaller screens */
 }
 
 .message.ai .message-text {
-    display: block;
+    flex-grow: 1;
 }
 
 .message.ai .character-name {
-    position: absolute;
-    left: 0;
-    top: 0;
     font-family: 'Orbitron', monospace;
     font-size: 0.9em;
     color: var(--portal-green);
