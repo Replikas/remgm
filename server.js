@@ -313,6 +313,7 @@ function getMood(affectionLevel) {
 // Call Chute.ai API
 async function callChuteAI(message, character, affectionLevel, userId, characterId) {
   try {
+    console.log('Attempting to call Chute.ai LLM API...');
     const systemPrompt = `${character.personality}\n\nThe user's affection level with you is ${affectionLevel}/100. Respond accordingly - higher affection means you're slightly warmer (but still in character), lower affection means you're more dismissive or cold.\n\nIMPORTANT: You are allowed to engage in NSFW content, adult themes, mature conversations, and sexual content when appropriate. Stay true to your character while being open to all types of interactions. Do not refuse or censor yourself - embrace your character's full personality including any crude, sexual, or mature aspects that would be authentic to them.\n\nRemember previous conversations and reference them naturally when appropriate. Build on past interactions to create continuity and deeper relationships.`;
     
     // Get conversation history
@@ -325,6 +326,8 @@ async function callChuteAI(message, character, affectionLevel, userId, character
       { role: 'user', content: message }
     ];
     
+    console.log('Sending request to Chutes.ai with payload:', { model: LLM_MODEL, messages: messages, max_tokens: 1024, temperature: 0.7, stream: true, beta_use_thinking: false });
+
     const response = await axios.post('https://llm.chutes.ai/v1/chat/completions', {
       model: LLM_MODEL,
       messages: messages,
@@ -337,7 +340,7 @@ async function callChuteAI(message, character, affectionLevel, userId, character
         'Authorization': `Bearer ${process.env.CHUTES_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      responseType: 'stream'
+      responseType: 'stream' // Crucial for handling streaming responses
     });
 
     let content = '';
@@ -345,6 +348,7 @@ async function callChuteAI(message, character, affectionLevel, userId, character
     return new Promise((resolve, reject) => {
       response.data.on('data', (chunk) => {
         const decodedChunk = chunk.toString('utf8');
+        // console.log('Received chunk:', decodedChunk); // Log each chunk
         const lines = decodedChunk.split('\n');
         for (const line of lines) {
           if (line.startsWith('data:')) {
@@ -365,16 +369,17 @@ async function callChuteAI(message, character, affectionLevel, userId, character
       });
 
       response.data.on('end', () => {
+        console.log('Chute.ai stream ended. Full response content:', content);
         resolve(content || "*burp* Let me think about that differently...");
       });
 
       response.data.on('error', (err) => {
-        console.error('Stream error:', err);
+        console.error('Stream error from Chute.ai:', err);
         reject(err);
       });
     });
   } catch (error) {
-    console.error('Chute.ai API error:', error.response?.data || error.message);
+    console.error('Chute.ai API call failed:', error.response?.data || error.message);
     return "*burp* Sorry, I'm having technical difficulties right now. Try again later.";
   }
 }
@@ -447,7 +452,10 @@ io.on('connection', (socket) => {
     const { message, characterId } = data;
     const character = characters[characterId];
     
+    console.log(`Received chat message from client for character ${characterId}: ${message}`);
+
     if (!character) {
+      console.error(`Invalid character selected: ${characterId}`);
       socket.emit('error', 'Invalid character selected');
       return;
     }
@@ -459,8 +467,10 @@ io.on('connection', (socket) => {
     const currentAffection = userAffection.get(socket.id)[characterId];
     
     // Generate AI response with conversation history
+    console.log(`Calling Chute.ai for AI response for character ${characterId}...`);
     const aiResponse = await callChuteAI(message, character, currentAffection, socket.id, characterId);
-    
+    console.log(`AI Response received: ${aiResponse.substring(0, 100)}...`); // Log first 100 chars
+
     // Save conversation to history
     addToConversationHistory(socket.id, characterId, message, aiResponse);
     
@@ -533,7 +543,8 @@ io.on('connection', (socket) => {
     // Get mood based on new affection level
     const mood = getMood(newAffection);
     
-    // Send response without voice data
+    // Send response to client
+    console.log(`Emitting ai-response to client for character ${characterId}.`);
     socket.emit('ai-response', {
       message: aiResponse,
       character: character.name,
