@@ -189,7 +189,8 @@ function addMessage(content, type, characterInfo = null) {
             <div class="message-content">
                 <img src="${characterInfo.avatar}" alt="${characterInfo.character}" class="chat-avatar">
                 <div class="message-text">
-                    <div class="character-name" style="color: ${characterInfo.color}">${formattedContent}</div>
+                    <div class="character-name" style="color: ${characterInfo.color}">${characterInfo.character}</div>
+                    <div>${formattedContent}</div>
                     ${affectionFooter}
                 </div>
             </div>
