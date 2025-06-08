@@ -237,54 +237,13 @@ body::before {
     margin-bottom: 1rem;
 }
 
-.affection-bar {
-    width: 100%;
-    height: 8px;
-    background: rgba(0, 255, 136, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
-    border: 1px solid var(--border-alpha);
-}
-
-.affection-bar.small {
-    height: 6px;
-}
-
-.affection-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--portal-dark-green), var(--portal-green));
-    border-radius: 4px;
-    transition: width 0.5s ease-out;
-    position: relative;
-    overflow: hidden;
-}
-
-.affection-fill::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
-}
-
+/* Remove affection bar styles */
+.affection-bar,
+.affection-bar.small,
+.affection-fill,
+.affection-fill::before,
 .affection-text {
-    position: absolute;
-    right: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.8rem;
-    color: var(--text-light);
-    font-weight: 600;
-    z-index: 2;
+    display: none;
 }
 
 .chat-container {
@@ -343,42 +302,12 @@ body::before {
     text-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
 }
 
-.current-affection {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--glass-bg);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    border: 1px solid var(--glass-border);
-}
-
-.current-affection-fill {
-    width: 100px;
-    height: 6px;
-    background: rgba(0, 255, 136, 0.1);
-    border-radius: 3px;
-    overflow: hidden;
-    position: relative;
-    border: 1px solid var(--border-alpha);
-}
-
-.current-affection-fill::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    background: linear-gradient(90deg, var(--portal-green), var(--portal-dark-green));
-    border-radius: 3px;
-    transition: width 0.3s ease;
-}
-
+/* Remove current affection styles */
+.current-affection,
+.current-affection-fill,
+.current-affection-fill::before,
 .current-affection-text {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    min-width: 45px;
-    text-align: right;
+    display: none;
 }
 
 .back-btn,
@@ -532,6 +461,7 @@ body::before {
     margin-bottom: 0.5rem;
 }
 
+/* Keep the message affection footer styles */
 .affection-footer {
     display: flex;
     align-items: center;
