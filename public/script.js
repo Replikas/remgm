@@ -17,6 +17,14 @@ const currentName = document.getElementById('currentName');
 const currentAffectionFill = document.getElementById('currentAffectionFill');
 const currentAffectionText = document.getElementById('currentAffectionText');
 
+// Voice functionality
+let voiceEnabled = false;
+const voiceToggleBtn = document.getElementById('voiceToggleBtn');
+const voiceUploadContainer = document.getElementById('voiceUploadContainer');
+const uploadVoiceBtn = document.getElementById('uploadVoiceBtn');
+const voiceSamplesList = document.getElementById('voiceSamplesList');
+const voiceMessageTemplate = document.getElementById('voiceMessageTemplate');
+
 // Character selection
 characterCards.forEach(card => {
     card.addEventListener('click', () => {
@@ -41,6 +49,47 @@ messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
+    }
+});
+
+// Toggle voice functionality
+voiceToggleBtn.addEventListener('click', () => {
+    voiceEnabled = !voiceEnabled;
+    voiceToggleBtn.classList.toggle('active');
+    voiceUploadContainer.style.display = voiceEnabled ? 'block' : 'none';
+    voiceToggleBtn.querySelector('.voice-icon').textContent = voiceEnabled ? '🔊' : '🔈';
+});
+
+// Handle voice sample upload
+uploadVoiceBtn.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'audio/*';
+    
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+            const audioData = await file.arrayBuffer();
+            socket.emit('upload-voice-sample', {
+                characterId: currentCharacter,
+                audioData: Buffer.from(audioData).toString('base64'),
+                fileName: file.name
+            });
+        } catch (error) {
+            console.error('Error uploading voice sample:', error);
+            alert('Failed to upload voice sample');
+        }
+    };
+    
+    input.click();
+});
+
+// Handle voice sample upload confirmation
+socket.on('voice-sample-uploaded', (data) => {
+    if (data.success) {
+        addVoiceSampleToList(data.fileName, data.characterId);
     }
 });
 
@@ -184,10 +233,11 @@ function sendMessage() {
     // Show typing indicator
     showTypingIndicator();
     
-    // Send to server
+    // Send to server with voice option
     socket.emit('chat-message', {
         message: message,
-        characterId: currentCharacter
+        characterId: currentCharacter,
+        useVoice: voiceEnabled
     });
     
     // Clear input
@@ -228,6 +278,15 @@ function addMessage(content, type, characterInfo = null) {
             `;
         }
         
+        // Add voice message if available
+        let voiceMessage = '';
+        if (characterInfo.voiceData) {
+            const voiceDiv = voiceMessageTemplate.content.cloneNode(true);
+            const audio = voiceDiv.querySelector('audio source');
+            audio.src = `data:audio/mpeg;base64,${characterInfo.voiceData}`;
+            voiceMessage = voiceDiv.innerHTML;
+        }
+        
         messageDiv.innerHTML = `
             <div class="message-content">
                 <img src="${characterInfo.avatar}" alt="${characterInfo.character}" class="chat-avatar">
@@ -235,6 +294,7 @@ function addMessage(content, type, characterInfo = null) {
                     <div class="character-name" style="color: ${characterInfo.color}">${characterInfo.character}</div>
                     <div>${formattedContent}</div>
                     ${affectionFooter}
+                    ${voiceMessage}
                 </div>
             </div>
         `;
@@ -243,7 +303,6 @@ function addMessage(content, type, characterInfo = null) {
         messageDiv.innerHTML = `<div style="font-style: italic; opacity: 0.8;">${formattedContent}</div>`;
         messageDiv.className = 'message ai';
     } else {
-        // Apply markdown formatting to user messages as well
         messageDiv.innerHTML = formatMarkdown(content);
     }
     
@@ -288,6 +347,30 @@ function clearChat() {
             }, 300);
         }
     }
+}
+
+// Add voice sample to the list
+function addVoiceSampleToList(fileName, characterId) {
+    const sampleItem = document.createElement('div');
+    sampleItem.className = 'voice-sample-item';
+    sampleItem.innerHTML = `
+        <div class="sample-info">
+            <span class="sample-name">${fileName}</span>
+            <span class="sample-duration">Sample</span>
+        </div>
+        <div class="sample-actions">
+            <button class="delete-sample" title="Delete Sample">🗑️</button>
+        </div>
+    `;
+    
+    // Add delete functionality
+    const deleteBtn = sampleItem.querySelector('.delete-sample');
+    deleteBtn.addEventListener('click', () => {
+        socket.emit('delete-voice-sample', { characterId, fileName });
+        sampleItem.remove();
+    });
+    
+    voiceSamplesList.appendChild(sampleItem);
 }
 
 // Initialize

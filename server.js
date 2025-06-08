@@ -236,6 +236,9 @@ const userAffection = new Map();
 // Store conversation history for each user and character
 const conversationHistory = new Map();
 
+// Voice sample storage
+const voiceSamples = new Map();
+
 // Initialize affection levels for a user
 function initializeAffection(userId) {
   if (!userAffection.has(userId)) {
@@ -355,6 +358,34 @@ async function callChuteAI(message, character, affectionLevel, userId, character
   }
 }
 
+// Chutes.ai API integration
+async function generateVoice(text, characterId) {
+    try {
+        const response = await fetch('https://api.chutes.ai/v1/tts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.CHUTES_API_KEY}`
+            },
+            body: JSON.stringify({
+                text: text,
+                voice_id: characterId,
+                model: 'default'
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Voice generation failed');
+        }
+
+        const audioBuffer = await response.arrayBuffer();
+        return Buffer.from(audioBuffer);
+    } catch (error) {
+        console.error('Voice generation error:', error);
+        throw error;
+    }
+}
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -419,8 +450,33 @@ io.on('connection', (socket) => {
     });
   });
   
+  // Handle voice sample upload
+  socket.on('upload-voice-sample', async (data) => {
+    try {
+      const { characterId, audioData, fileName } = data;
+      
+      // Store the voice sample
+      if (!voiceSamples.has(characterId)) {
+        voiceSamples.set(characterId, new Map());
+      }
+      
+      const samples = voiceSamples.get(characterId);
+      samples.set(fileName, audioData);
+      
+      // Send confirmation
+      socket.emit('voice-sample-uploaded', {
+        success: true,
+        fileName,
+        characterId
+      });
+    } catch (error) {
+      console.error('Voice sample upload error:', error);
+      socket.emit('error', 'Failed to upload voice sample');
+    }
+  });
+  
   socket.on('chat-message', async (data) => {
-    const { message, characterId } = data;
+    const { message, characterId, useVoice } = data;
     const character = characters[characterId];
     
     if (!character) {
@@ -439,6 +495,17 @@ io.on('connection', (socket) => {
     
     // Save conversation to history
     addToConversationHistory(socket.id, characterId, message, aiResponse);
+    
+    // Generate voice if requested
+    let voiceData = null;
+    if (useVoice) {
+      try {
+        voiceData = await generateVoice(aiResponse, characterId);
+      } catch (error) {
+        console.error('Voice generation failed:', error);
+        // Continue without voice
+      }
+    }
     
     // Character-specific affection logic based on personalities
     let affectionChange = 0;
@@ -503,31 +570,22 @@ io.on('connection', (socket) => {
     }
     
     // Update affection
-    const newAffection = updateAffection(socket.id, characterId, affectionChange);
+    const newAffection = Math.max(0, Math.min(100, currentAffection + affectionChange));
+    userAffection.get(socket.id)[characterId] = newAffection;
     
-    // Determine mood based on affection level
-    let mood = '';
-    if (newAffection >= 80) {
-      mood = 'Adoring';
-    } else if (newAffection >= 60) {
-      mood = 'Friendly';
-    } else if (newAffection >= 40) {
-      mood = 'Neutral';
-    } else if (newAffection >= 20) {
-      mood = 'Annoyed';
-    } else {
-      mood = 'Hostile';
-    }
+    // Get mood based on new affection level
+    const mood = getMood(newAffection);
     
-    // Send response
+    // Send response with voice data if available
     socket.emit('ai-response', {
-      character: character.name,
       message: aiResponse,
+      character: character.name,
       avatar: character.avatar,
       color: character.color,
       affection: newAffection,
       affectionChange: affectionChange,
-      mood: mood
+      mood: mood,
+      voiceData: voiceData ? voiceData.toString('base64') : null
     });
     
     // Send updated affection levels
