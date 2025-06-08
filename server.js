@@ -236,8 +236,23 @@ const userAffection = new Map();
 // Store conversation history for each user and character
 const conversationHistory = new Map();
 
-// Voice sample storage
-const voiceSamples = new Map();
+// Voice sample configuration
+const voiceSamples = {
+    'rick-c137': {
+        name: 'Rick Sanchez',
+        samples: [
+            { id: 'rick-1', name: 'Rick Voice 1' },
+            { id: 'rick-2', name: 'Rick Voice 2' }
+        ]
+    },
+    'morty-c137': {
+        name: 'Morty Smith',
+        samples: [
+            { id: 'morty-1', name: 'Morty Voice 1' },
+            { id: 'morty-2', name: 'Morty Voice 2' }
+        ]
+    }
+};
 
 // Initialize affection levels for a user
 function initializeAffection(userId) {
@@ -361,6 +376,14 @@ async function callChuteAI(message, character, affectionLevel, userId, character
 // Chutes.ai API integration
 async function generateVoice(text, characterId) {
     try {
+        // Get a random sample for the character
+        const characterSamples = voiceSamples[characterId]?.samples || [];
+        if (characterSamples.length === 0) {
+            throw new Error('No voice samples available for this character');
+        }
+        
+        const randomSample = characterSamples[Math.floor(Math.random() * characterSamples.length)];
+        
         const response = await fetch('https://api.chutes.ai/v1/tts', {
             method: 'POST',
             headers: {
@@ -369,7 +392,7 @@ async function generateVoice(text, characterId) {
             },
             body: JSON.stringify({
                 text: text,
-                voice_id: characterId,
+                voice_id: randomSample.id,
                 model: 'default'
             })
         });
@@ -450,29 +473,9 @@ io.on('connection', (socket) => {
     });
   });
   
-  // Handle voice sample upload
-  socket.on('upload-voice-sample', async (data) => {
-    try {
-      const { characterId, audioData, fileName } = data;
-      
-      // Store the voice sample
-      if (!voiceSamples.has(characterId)) {
-        voiceSamples.set(characterId, new Map());
-      }
-      
-      const samples = voiceSamples.get(characterId);
-      samples.set(fileName, audioData); // Store as base64 string
-      
-      // Send confirmation
-      socket.emit('voice-sample-uploaded', {
-        success: true,
-        fileName,
-        characterId
-      });
-    } catch (error) {
-      console.error('Voice sample upload error:', error);
-      socket.emit('error', 'Failed to upload voice sample');
-    }
+  // Send available voice samples to client
+  socket.on('request-voice-samples', () => {
+    socket.emit('voice-samples-list', voiceSamples);
   });
   
   socket.on('chat-message', async (data) => {

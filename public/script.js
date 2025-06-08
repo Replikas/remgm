@@ -21,9 +21,6 @@ const currentAffectionText = document.getElementById('currentAffectionText');
 let voiceEnabled = false;
 const voiceToggleBtn = document.getElementById('voiceToggleBtn');
 const voiceUploadContainer = document.getElementById('voiceUploadContainer');
-const uploadVoiceBtn = document.getElementById('uploadVoiceBtn');
-const voiceSamplesList = document.getElementById('voiceSamplesList');
-const voiceMessageTemplate = document.getElementById('voiceMessageTemplate');
 
 // Character selection
 characterCards.forEach(card => {
@@ -56,96 +53,10 @@ messageInput.addEventListener('keypress', (e) => {
 voiceToggleBtn.addEventListener('click', () => {
     voiceEnabled = !voiceEnabled;
     voiceToggleBtn.classList.toggle('active');
-    voiceUploadContainer.style.display = voiceEnabled ? 'block' : 'none';
     voiceToggleBtn.querySelector('.voice-icon').textContent = voiceEnabled ? '🔊' : '🔈';
 });
 
-// Handle voice sample upload
-uploadVoiceBtn.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'audio/*';
-    
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        try {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const base64Data = event.target.result.split(',')[1]; // Remove the data URL prefix
-                socket.emit('upload-voice-sample', {
-                    characterId: currentCharacter,
-                    audioData: base64Data,
-                    fileName: file.name
-                });
-            };
-            reader.readAsDataURL(file);
-        } catch (error) {
-            console.error('Error uploading voice sample:', error);
-            alert('Failed to upload voice sample');
-        }
-    };
-    
-    input.click();
-});
-
-// Handle voice sample upload confirmation
-socket.on('voice-sample-uploaded', (data) => {
-    if (data.success) {
-        addVoiceSampleToList(data.fileName, data.characterId);
-    }
-});
-
-// Socket event listeners
-socket.on('affection-update', (affection) => {
-    affectionLevels = affection;
-    updateAffectionDisplay();
-});
-
-socket.on('ai-response', (data) => {
-    // Remove typing indicator
-    removeTypingIndicator();
-    
-    addMessage(data.message, 'ai', {
-        character: data.character,
-        avatar: data.avatar,
-        color: data.color,
-        affection: data.affection,
-        affectionChange: data.affectionChange,
-        mood: data.mood
-    });
-    
-    // Update current character affection if it matches
-    if (currentCharacter && affectionLevels[currentCharacter] !== undefined) {
-        updateCurrentAffection();
-    }
-    
-    // Re-enable send button
-    sendBtn.disabled = false;
-    sendBtn.textContent = 'Send';
-});
-
-socket.on('error', (error) => {
-    console.error('Socket error:', error);
-    removeTypingIndicator();
-    addMessage('Sorry, there was an error processing your message.', 'system');
-    sendBtn.disabled = false;
-    sendBtn.textContent = 'Send';
-});
-
-socket.on('welcome-message', (data) => {
-    addMessage(data.message, 'ai', {
-        character: data.character,
-        avatar: data.avatar,
-        color: getCharacterColor(currentCharacter),
-        affection: data.affection,
-        affectionChange: data.affectionChange,
-        mood: data.mood
-    });
-});
-
-// Functions
+// Request available voice samples when selecting a character
 function selectCharacter(characterId) {
     currentCharacter = characterId;
     
@@ -173,7 +84,6 @@ function selectCharacter(characterId) {
     // Clear previous messages
     chatMessages.innerHTML = '';
     
-    // Add welcome message
     // Request welcome message from server
     setTimeout(() => {
         socket.emit('request-welcome', { characterId });
@@ -351,30 +261,6 @@ function clearChat() {
             }, 300);
         }
     }
-}
-
-// Add voice sample to the list
-function addVoiceSampleToList(fileName, characterId) {
-    const sampleItem = document.createElement('div');
-    sampleItem.className = 'voice-sample-item';
-    sampleItem.innerHTML = `
-        <div class="sample-info">
-            <span class="sample-name">${fileName}</span>
-            <span class="sample-duration">Sample</span>
-        </div>
-        <div class="sample-actions">
-            <button class="delete-sample" title="Delete Sample">🗑️</button>
-        </div>
-    `;
-    
-    // Add delete functionality
-    const deleteBtn = sampleItem.querySelector('.delete-sample');
-    deleteBtn.addEventListener('click', () => {
-        socket.emit('delete-voice-sample', { characterId, fileName });
-        sampleItem.remove();
-    });
-    
-    voiceSamplesList.appendChild(sampleItem);
 }
 
 // Initialize
