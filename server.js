@@ -461,7 +461,7 @@ io.on('connection', (socket) => {
       }
       
       const samples = voiceSamples.get(characterId);
-      samples.set(fileName, audioData);
+      samples.set(fileName, audioData); // Store as base64 string
       
       // Send confirmation
       socket.emit('voice-sample-uploaded', {

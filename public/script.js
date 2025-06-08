@@ -71,12 +71,16 @@ uploadVoiceBtn.addEventListener('click', () => {
         if (!file) return;
         
         try {
-            const audioData = await file.arrayBuffer();
-            socket.emit('upload-voice-sample', {
-                characterId: currentCharacter,
-                audioData: Buffer.from(audioData).toString('base64'),
-                fileName: file.name
-            });
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const base64Data = event.target.result.split(',')[1]; // Remove the data URL prefix
+                socket.emit('upload-voice-sample', {
+                    characterId: currentCharacter,
+                    audioData: base64Data,
+                    fileName: file.name
+                });
+            };
+            reader.readAsDataURL(file);
         } catch (error) {
             console.error('Error uploading voice sample:', error);
             alert('Failed to upload voice sample');
