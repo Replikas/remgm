@@ -51,6 +51,9 @@ socket.on('affection-update', (affection) => {
 });
 
 socket.on('ai-response', (data) => {
+    // Remove typing indicator
+    removeTypingIndicator();
+    
     addMessage(data.message, 'ai', {
         character: data.character,
         avatar: data.avatar,
@@ -72,6 +75,7 @@ socket.on('ai-response', (data) => {
 
 socket.on('error', (error) => {
     console.error('Socket error:', error);
+    removeTypingIndicator();
     addMessage('Sorry, there was an error processing your message.', 'system');
     sendBtn.disabled = false;
     sendBtn.textContent = 'Send';
@@ -150,6 +154,21 @@ function showChatInterface() {
     messageInput.focus();
 }
 
+function showTypingIndicator() {
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'typing-indicator';
+    typingDiv.innerHTML = '<span></span><span></span><span></span>';
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function removeTypingIndicator() {
+    const typingIndicator = document.querySelector('.typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+}
+
 function sendMessage() {
     const message = messageInput.value.trim();
     
@@ -161,6 +180,9 @@ function sendMessage() {
     
     // Add user message to chat
     addMessage(message, 'user');
+    
+    // Show typing indicator
+    showTypingIndicator();
     
     // Send to server
     socket.emit('chat-message', {
