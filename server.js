@@ -328,9 +328,9 @@ async function callChuteAI(message, character, affectionLevel, userId, character
     const response = await axios.post('https://llm.chutes.ai/v1/chat/completions', {
       model: LLM_MODEL,
       messages: messages,
-      max_tokens: 1500,
-      temperature: 0.8,
-      beta_use_thinking: false
+      max_tokens: 1024,
+      temperature: 0.7,
+      stream: true
     }, {
       headers: {
         'Authorization': `Bearer ${process.env.CHUTES_API_KEY}`,
@@ -338,10 +338,34 @@ async function callChuteAI(message, character, affectionLevel, userId, character
       }
     });
 
-    let content = response.data.choices[0].message.content;
-    
+    let content = '';
+    // Handle streaming response
+    for await (const chunk of response.data) {
+      // Assuming the chunk is a string that needs to be parsed
+      const decodedChunk = Buffer.from(chunk).toString('utf8');
+      // Basic parsing for SSE (Server-Sent Events) format which Chutes.ai often uses for streaming
+      const lines = decodedChunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data:')) {
+          const json = line.substring(5).trim();
+          if (json === '[DONE]') {
+            break;
+          }
+          try {
+            const parsed = JSON.parse(json);
+            if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+              content += parsed.choices[0].delta.content;
+              // You might want to emit partial messages here if you want real-time streaming to the client
+              // For now, we'll accumulate and send the full message once done.
+            }
+          } catch (e) {
+            console.error('Error parsing JSON chunk:', e);
+          }
+        }
+      }
+    }
+
     // Filter out thinking process if it appears in the response
-    // DeepSeek thinking usually appears between <think> tags or similar patterns
     content = content.replace(/<think>.*?<\/think>/gs, '');
     content = content.replace(/<thinking>.*?<\/thinking>/gs, '');
     content = content.replace(/\*\*Thinking:\*\*.*?\*\*Answer:\*\*/gs, '');
