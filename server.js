@@ -245,25 +245,25 @@ const voiceSamples = {
     'rick-c137': {
         name: 'Rick Sanchez',
         samples: [
-            { filePath: './public/voice-samples/rickc137.wav', name: 'Rick Voice' }
+            { filePath: './public/voice-samples/rickc137.mp3', name: 'Rick Voice' }
         ]
     },
     'morty-c137': {
         name: 'Morty Smith',
         samples: [
-            { filePath: './public/voice-samples/morty.wav', name: 'Morty Voice' }
+            { filePath: './public/voice-samples/morty.mp3', name: 'Morty Voice' }
         ]
     },
     'rick-prime': {
         name: 'Prime Rick',
         samples: [
-            { filePath: './public/voice-samples/rickprime.wav', name: 'Prime Rick Voice' }
+            { filePath: './public/voice-samples/rickprime.mp3', name: 'Prime Rick Voice' }
         ]
     },
     'evil-morty': {
         name: 'Evil Morty',
         samples: [
-            { filePath: './public/voice-samples/evilmorty.wav', name: 'Evil Morty Voice' }
+            { filePath: './public/voice-samples/evilmorty.mp3', name: 'Evil Morty Voice' }
         ]
     }
 };
