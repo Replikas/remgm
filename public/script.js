@@ -243,7 +243,8 @@ function addMessage(content, type, characterInfo = null) {
         messageDiv.innerHTML = `<div style="font-style: italic; opacity: 0.8;">${formattedContent}</div>`;
         messageDiv.className = 'message ai';
     } else {
-        messageDiv.textContent = content;
+        // Apply markdown formatting to user messages as well
+        messageDiv.innerHTML = formatMarkdown(content);
     }
     
     chatMessages.appendChild(messageDiv);
