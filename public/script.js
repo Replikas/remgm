@@ -139,7 +139,7 @@ function sendMessage() {
     // Show typing indicator
     showTypingIndicator();
     
-    // Send to server without voice option
+    // Send to server
     socket.emit('chat-message', {
         message: message,
         characterId: currentCharacter,
@@ -151,10 +151,15 @@ function sendMessage() {
 
 function formatMarkdown(text) {
     // Convert markdown-style formatting to HTML
+    // Speech: text within double quotes becomes bold
+    text = text.replace(/"(.*?)"/g, '<strong>"$1"</strong>');
+    // Actions: text within single asterisks becomes italic
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Existing rules (ensure they don't conflict or are removed if redundant)
     return text
         .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>') // Bold + Italic
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-        .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold (will apply if not caught by speech quotes)
         .replace(/_(.*?)_/g, '<em>$1</em>') // Italic with underscores
         .replace(/~~(.*?)~~/g, '<del>$1</del>') // Strikethrough
         .replace(/`(.*?)`/g, '<code>$1</code>') // Inline code
@@ -277,7 +282,6 @@ socket.on('ai-response', (data) => {
         affection: data.affection,
         affectionChange: data.affectionChange,
         mood: data.mood,
-        // Removed voiceData property
     });
     updateCurrentAffection();
 });
