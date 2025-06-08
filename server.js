@@ -2,6 +2,8 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const axios = require('axios');
+const path = require('path');
+const fs = require('fs').promises;
 require('dotenv').config();
 
 const app = express();
@@ -241,25 +243,25 @@ const voiceSamples = {
     'rick-c137': {
         name: 'Rick Sanchez',
         samples: [
-            { id: 'rick-1', name: 'Rick Voice' }
+            { filePath: './public/voice-samples/rick-1.mp3', name: 'Rick Voice' }
         ]
     },
     'morty-c137': {
         name: 'Morty Smith',
         samples: [
-            { id: 'morty-1', name: 'Morty Voice' }
+            { filePath: './public/voice-samples/morty-1.mp3', name: 'Morty Voice' }
         ]
     },
     'rick-prime': {
         name: 'Prime Rick',
         samples: [
-            { id: 'rick-prime-1', name: 'Prime Rick Voice' }
+            { filePath: './public/voice-samples/rick-prime-1.mp3', name: 'Prime Rick Voice' }
         ]
     },
     'evil-morty': {
         name: 'Evil Morty',
         samples: [
-            { id: 'evil-morty-1', name: 'Evil Morty Voice' }
+            { filePath: './public/voice-samples/evil-morty-1.mp3', name: 'Evil Morty Voice' }
         ]
     }
 };
@@ -386,36 +388,38 @@ async function callChuteAI(message, character, affectionLevel, userId, character
 // Chutes.ai API integration
 async function generateVoice(text, characterId) {
     try {
-        // Get a random sample for the character
-        const characterSamples = voiceSamples[characterId]?.samples || [];
-        if (characterSamples.length === 0) {
-            throw new Error('No voice samples available for this character');
+        const characterSamples = voiceSamples[characterId];
+        if (!characterSamples || characterSamples.samples.length === 0) {
+            console.error(`No voice samples found for character: ${characterId}`);
+            return null;
         }
-        
-        const randomSample = characterSamples[Math.floor(Math.random() * characterSamples.length)];
-        
-        const response = await fetch('https://api.chutes.ai/v1/tts', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.CHUTES_API_KEY}`
-            },
-            body: JSON.stringify({
+
+        const randomSample = characterSamples.samples[Math.floor(Math.random() * characterSamples.samples.length)];
+        const audioFilePath = path.join(__dirname, randomSample.filePath);
+        const audioData = await fs.readFile(audioFilePath);
+        const sampleAudioB64 = audioData.toString('base64');
+
+        const response = await axios.post(
+            'https://chutes-spark-tts.chutes.ai/speak',
+            {
                 text: text,
-                voice_id: randomSample.id,
-                model: 'default'
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Voice generation failed');
-        }
-
-        const audioBuffer = await response.arrayBuffer();
-        return Buffer.from(audioBuffer);
+                top_p: 0.95,
+                gender: 'female', // Assuming female for all characters based on previous context, adjust if needed
+                sample_audio_b64: sampleAudioB64,
+                sample_audio_text: null // Not needed if sending base64 audio
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.CHUTES_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                responseType: 'arraybuffer' // To handle binary data
+            }
+        );
+        return response.data; // This will be the audio buffer
     } catch (error) {
-        console.error('Voice generation error:', error);
-        throw error;
+        console.error('Error generating voice:', error.response ? error.response.data : error.message);
+        return null;
     }
 }
 
