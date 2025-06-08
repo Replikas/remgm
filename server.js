@@ -12,7 +12,7 @@ const io = socketIo(server);
 
 const PORT = process.env.PORT || 3001;
 
-const LLM_MODEL = 'chutesai/Llama-4-Maverick-17B-128E-Instruct-FP8';
+const LLM_MODEL = 'deepseek-ai/DeepSeek-R1-0528';
 
 // Serve static files
 app.use(express.static('public'));
