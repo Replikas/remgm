@@ -324,7 +324,7 @@ async function callChuteAI(message, character, affectionLevel, userId, character
     ];
     
     const response = await axios.post('https://llm.chutes.ai/v1/chat/completions', {
-      model: 'deepseek-ai/DeepSeek-R1-0528',
+      model: 'deepseek-ai/DeepSeek-V3-0324',
       messages: messages,
       max_tokens: 1500,
       temperature: 0.8,
