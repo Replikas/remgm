@@ -359,7 +359,10 @@ async function callChuteAI(message, character, affectionLevel, userId, character
             try {
               const parsed = JSON.parse(json);
               if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
-                content += parsed.choices[0].delta.content;
+                // Skip thinking messages
+                if (!parsed.choices[0].delta.content.includes('thinking')) {
+                  content += parsed.choices[0].delta.content;
+                }
               }
             } catch (e) {
               console.error('Error parsing JSON chunk:', e);
