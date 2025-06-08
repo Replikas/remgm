@@ -774,6 +774,9 @@ body::before {
 
     .chat-header {
         padding: 0.8rem 1rem;
+        position: sticky; /* Make header sticky */
+        top: 0; /* Stick to the top */
+        z-index: 10; /* Ensure it stays above other content */
     }
 
     .current-name {
@@ -899,6 +902,9 @@ body::before {
 
     .character-grid {
         grid-template-columns: 1fr;
+        max-height: calc(100vh - 120px); /* Adjust max-height for scrollability on small screens */
+        overflow-y: auto; /* Enable scrolling for character grid */
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
     }
 
     .message.ai .message-content {
