@@ -330,7 +330,8 @@ async function callChuteAI(message, character, affectionLevel, userId, character
       messages: messages,
       max_tokens: 1024,
       temperature: 0.7,
-      stream: true
+      stream: true,
+      beta_use_thinking: false
     }, {
       headers: {
         'Authorization': `Bearer ${process.env.CHUTES_API_KEY}`,
