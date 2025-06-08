@@ -12,6 +12,8 @@ const io = socketIo(server);
 
 const PORT = process.env.PORT || 3001;
 
+const LLM_MODEL = 'chutesai/Llama-4-Maverick-17B-128E-Instruct-FP8';
+
 // Serve static files
 app.use(express.static('public'));
 app.use(express.json());
@@ -354,7 +356,7 @@ async function callChuteAI(message, character, affectionLevel, userId, character
     ];
     
     const response = await axios.post('https://llm.chutes.ai/v1/chat/completions', {
-      model: 'deepseek-ai/DeepSeek-V3-0324',
+      model: LLM_MODEL,
       messages: messages,
       max_tokens: 1500,
       temperature: 0.8,
