@@ -18,7 +18,8 @@ html, body {
     width: 100%; /* Ensure html and body take full width */
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Prevent scrolling on body, chat messages will scroll internally */
+    overflow-x: hidden; /* Prevent horizontal scrolling on body */
+    overflow-y: auto; /* Allow vertical scrolling on body */
 }
 
 * {
@@ -71,6 +72,7 @@ body::before {
     box-sizing: border-box;
     position: relative;
     z-index: 1;
+    overflow-y: auto; /* Allow container to scroll if content overflows */
 }
 
 .header-section {
@@ -729,12 +731,15 @@ body::before {
 
 @media (max-width: 768px) {
     body {
-        padding: 0; /* Ensure no padding on the body */
+        padding: 0;
+        overflow-y: auto; /* Ensure body is scrollable on mobile */
     }
 
     .container {
         padding: 0; /* Remove padding from the main container on mobile */
         width: 100%; /* Ensure container takes full width */
+        overflow-y: auto; /* Ensure container is scrollable on mobile */
+        min-height: 100vh; /* Ensure it takes full viewport height */
     }
 
     .header {
@@ -749,6 +754,16 @@ body::before {
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 1rem;
         padding: 0.8rem;
+        max-height: none; /* Remove max-height to allow full content display in scrollable container */
+        overflow-y: visible; /* Let container handle overflow */
+        -webkit-overflow-scrolling: auto; /* Revert to default for now */
+    }
+
+    .character-selection {
+        display: flex; /* Ensure flex behavior */
+        flex-direction: column; /* Stack children vertically */
+        flex-grow: 1; /* Allow to grow within container */
+        overflow-y: visible; /* Let the container handle scrolling */
     }
 
     .character-card {
@@ -770,6 +785,7 @@ body::before {
         border-radius: 0;
         padding: 0; /* Ensure no internal padding */
         margin: 0; /* Ensure no external margins */
+        overflow-y: auto; /* Make chat container itself scrollable */
     }
 
     .chat-header {
@@ -787,6 +803,7 @@ body::before {
         padding: 0; /* Remove all padding to maximize message width on mobile */
         flex-grow: 1; /* Allow messages to grow */
         gap: 0; /* Remove gap to ensure messages take full available width */
+        overflow-y: visible; /* Let chat-container handle scrolling */
     }
 
     .message {
@@ -902,9 +919,9 @@ body::before {
 
     .character-grid {
         grid-template-columns: 1fr;
-        max-height: calc(100vh - 120px); /* Adjust max-height for scrollability on small screens */
-        overflow-y: auto; /* Enable scrolling for character grid */
-        -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
+        max-height: none; /* Allow content to dictate height, parent will scroll */
+        overflow-y: visible; /* Let container handle overflow */
+        -webkit-overflow-scrolling: auto; /* Revert to default for now */
     }
 
     .message.ai .message-content {
