@@ -251,6 +251,20 @@ const voiceSamples = {
             { id: 'morty-1', name: 'Morty Voice 1' },
             { id: 'morty-2', name: 'Morty Voice 2' }
         ]
+    },
+    'rick-prime': {
+        name: 'Prime Rick',
+        samples: [
+            { id: 'rick-prime-1', name: 'Prime Rick Voice 1' },
+            { id: 'rick-prime-2', name: 'Prime Rick Voice 2' }
+        ]
+    },
+    'evil-morty': {
+        name: 'Evil Morty',
+        samples: [
+            { id: 'evil-morty-1', name: 'Evil Morty Voice 1' },
+            { id: 'evil-morty-2', name: 'Evil Morty Voice 2' }
+        ]
     }
 };
 
