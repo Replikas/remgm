@@ -17,10 +17,7 @@ const currentName = document.getElementById('currentName');
 const currentAffectionFill = document.getElementById('currentAffectionFill');
 const currentAffectionText = document.getElementById('currentAffectionText');
 
-// Voice functionality
-let voiceEnabled = false;
-const voiceToggleBtn = document.getElementById('voiceToggleBtn');
-const voiceUploadContainer = document.getElementById('voiceUploadContainer');
+// Voice functionality - Removed
 
 // Character selection
 characterCards.forEach(card => {
@@ -49,14 +46,9 @@ messageInput.addEventListener('keypress', (e) => {
     }
 });
 
-// Toggle voice functionality
-voiceToggleBtn.addEventListener('click', () => {
-    voiceEnabled = !voiceEnabled;
-    voiceToggleBtn.classList.toggle('active');
-    voiceToggleBtn.querySelector('.voice-icon').textContent = voiceEnabled ? '🔊' : '🔈';
-});
+// Removed Toggle voice functionality
 
-// Request available voice samples when selecting a character
+// Request available voice samples when selecting a character - Removed related logic
 function selectCharacter(characterId) {
     currentCharacter = characterId;
     
@@ -147,11 +139,10 @@ function sendMessage() {
     // Show typing indicator
     showTypingIndicator();
     
-    // Send to server with voice option
+    // Send to server without voice option
     socket.emit('chat-message', {
         message: message,
         characterId: currentCharacter,
-        useVoice: voiceEnabled
     });
     
     // Clear input
@@ -192,23 +183,14 @@ function addMessage(content, type, characterInfo = null) {
             `;
         }
         
-        // Add voice message if available
-        let voiceMessage = '';
-        if (characterInfo.voiceData) {
-            const voiceDiv = voiceMessageTemplate.content.cloneNode(true);
-            const audio = voiceDiv.querySelector('audio source');
-            audio.src = `data:audio/mpeg;base64,${characterInfo.voiceData}`;
-            voiceMessage = voiceDiv.innerHTML;
-        }
+        // Removed Add voice message if available
         
         messageDiv.innerHTML = `
             <div class="message-content">
                 <img src="${characterInfo.avatar}" alt="${characterInfo.character}" class="chat-avatar">
                 <div class="message-text">
-                    <div class="character-name" style="color: ${characterInfo.color}">${characterInfo.character}</div>
-                    <div>${formattedContent}</div>
+                    <div class="character-name" style="color: ${characterInfo.color}">${formattedContent}</div>
                     ${affectionFooter}
-                    ${voiceMessage}
                 </div>
             </div>
         `;
@@ -282,3 +264,21 @@ socket.on('reconnect', () => {
     console.log('Reconnected to server');
     addMessage('Reconnected successfully!', 'system');
 });
+
+socket.on('ai-response', (data) => {
+    removeTypingIndicator();
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send';
+    addMessage(data.message, 'ai', {
+        character: data.character,
+        avatar: data.avatar,
+        color: getCharacterColor(data.characterId),
+        affection: data.affection,
+        affectionChange: data.affectionChange,
+        mood: data.mood,
+        // Removed voiceData property
+    });
+    updateCurrentAffection();
+});
+
+// Removed socket.on('voice-samples-list')

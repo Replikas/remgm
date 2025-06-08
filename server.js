@@ -2,8 +2,6 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const axios = require('axios');
-const path = require('path');
-const fs = require('fs').promises;
 require('dotenv').config();
 
 const app = express();
@@ -240,34 +238,6 @@ const userAffection = new Map();
 // Store conversation history for each user and character
 const conversationHistory = new Map();
 
-// Voice sample configuration
-const voiceSamples = {
-    'rick-c137': {
-        name: 'Rick Sanchez',
-        samples: [
-            { filePath: './public/voice-samples/rickc137.mp3', name: 'Rick Voice' }
-        ]
-    },
-    'morty-c137': {
-        name: 'Morty Smith',
-        samples: [
-            { filePath: './public/voice-samples/morty.mp3', name: 'Morty Voice' }
-        ]
-    },
-    'rick-prime': {
-        name: 'Prime Rick',
-        samples: [
-            { filePath: './public/voice-samples/rickprime.mp3', name: 'Prime Rick Voice' }
-        ]
-    },
-    'evil-morty': {
-        name: 'Evil Morty',
-        samples: [
-            { filePath: './public/voice-samples/evilmorty.mp3', name: 'Evil Morty Voice' }
-        ]
-    }
-};
-
 // Initialize affection levels for a user
 function initializeAffection(userId) {
   if (!userAffection.has(userId)) {
@@ -387,44 +357,6 @@ async function callChuteAI(message, character, affectionLevel, userId, character
   }
 }
 
-// Chutes.ai API integration
-async function generateVoice(text, characterId) {
-    try {
-        const characterSamples = voiceSamples[characterId];
-        if (!characterSamples || characterSamples.samples.length === 0) {
-            console.error(`No voice samples found for character: ${characterId}`);
-            return null;
-        }
-
-        const randomSample = characterSamples.samples[Math.floor(Math.random() * characterSamples.samples.length)];
-        const audioFilePath = path.join(__dirname, randomSample.filePath);
-        const audioData = await fs.readFile(audioFilePath);
-        const sampleAudioB64 = audioData.toString('base64');
-
-        const response = await axios.post(
-            'https://chutes-spark-tts.chutes.ai/speak',
-            {
-                text: text,
-                top_p: 0.95,
-                gender: 'female', // Assuming female for all characters based on previous context, adjust if needed
-                sample_audio_b64: sampleAudioB64,
-                sample_audio_text: null // Not needed if sending base64 audio
-            },
-            {
-                headers: {
-                    'Authorization': `Bearer ${process.env.CHUTES_API_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                responseType: 'arraybuffer' // To handle binary data
-            }
-        );
-        return response.data; // This will be the audio buffer
-    } catch (error) {
-        console.error('Error generating voice:', error.response ? error.response.data : error.message);
-        return null;
-    }
-}
-
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -489,19 +421,11 @@ io.on('connection', (socket) => {
     });
   });
   
-  // Send available voice samples to client
-  socket.on('request-voice-samples', () => {
-    socket.emit('voice-samples-list', voiceSamples);
-  });
-  
   socket.on('chat-message', async (data) => {
-    const { message, characterId, useVoice } = data;
+    const { message, characterId } = data;
     const character = characters[characterId];
     
-    console.log(`Received chat message for character ${characterId}: ${message}, useVoice: ${useVoice}`);
-
     if (!character) {
-      console.error(`Invalid character selected: ${characterId}`);
       socket.emit('error', 'Invalid character selected');
       return;
     }
@@ -513,25 +437,10 @@ io.on('connection', (socket) => {
     const currentAffection = userAffection.get(socket.id)[characterId];
     
     // Generate AI response with conversation history
-    console.log(`Calling Chute.ai for response for character ${characterId}...`);
     const aiResponse = await callChuteAI(message, character, currentAffection, socket.id, characterId);
-    console.log(`AI Response: ${aiResponse}`);
-
+    
     // Save conversation to history
     addToConversationHistory(socket.id, characterId, message, aiResponse);
-    
-    // Generate voice if requested
-    let voiceData = null;
-    if (useVoice) {
-      try {
-        console.log(`Generating voice for character ${characterId}...`);
-        voiceData = await generateVoice(aiResponse, characterId);
-        console.log(`Voice data generated: ${voiceData ? 'Yes' : 'No'}`);
-      } catch (error) {
-        console.error('Voice generation failed:', error);
-        // Continue without voice
-      }
-    }
     
     // Character-specific affection logic based on personalities
     let affectionChange = 0;
@@ -602,8 +511,7 @@ io.on('connection', (socket) => {
     // Get mood based on new affection level
     const mood = getMood(newAffection);
     
-    // Send response with voice data if available
-    console.log(`Emitting ai-response for character ${characterId}. Voice data present: ${voiceData ? 'Yes' : 'No'}.`);
+    // Send response without voice data
     socket.emit('ai-response', {
       message: aiResponse,
       character: character.name,
@@ -611,7 +519,6 @@ io.on('connection', (socket) => {
       affection: newAffection,
       affectionChange: affectionChange,
       mood: mood,
-      voice: voiceData ? Buffer.from(voiceData).toString('base64') : null // Convert buffer to base64 for client
     });
     
     // Send updated affection levels
