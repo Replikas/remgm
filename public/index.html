@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rick & Morty Chat Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="character-selection">
+            <div class="header-section">
+                <button class="back-to-menu-btn">← Back to Menu</button>
+                <div class="title-section">
+                    <h1 class="main-title">Choose Your <span class="adventure-text">Adventure</span></h1>
+                    <p class="subtitle">Select your interdimensional companion</p>
+                </div>
+            </div>
+            <div class="character-grid">
+                <div class="character-card" data-character="morty-c137">
+                    <div class="character-avatar">
+                        <img src="images/morty.jpg" alt="Morty Smith" class="character-image">
+                    </div>
+                    <h3>Morty Smith</h3>
+                    <p>Sweet, nervous, and surprisingly resilient. The perfect balance to Rick's chaos.</p>
+                    <div class="affection-bar">
+                        <div class="affection-fill" data-affection="morty-c137"></div>
+                        <span class="affection-text" data-affection-text="morty-c137">0%</span>
+                    </div>
+                </div>
+                
+                <div class="character-card" data-character="rick-c137">
+                    <div class="character-avatar">
+                        <img src="images/rick-c137.jpg" alt="Rick Sanchez" class="character-image">
+                    </div>
+                    <h3>Rick Sanchez</h3>
+                    <p>Genius inventor with a drinking problem and zero filter.</p>
+                    <div class="affection-bar">
+                        <div class="affection-fill" data-affection="rick-c137"></div>
+                        <span class="affection-text" data-affection-text="rick-c137">0%</span>
+                    </div>
+                </div>
+                
+                <div class="character-card" data-character="rick-prime">
+                    <div class="character-avatar">
+                        <img src="images/rickprime (2).webp" alt="Rick Prime" class="character-image">
+                    </div>
+                    <h3>Rick Prime</h3>
+                    <p>The Rick who killed C-137's family and started it all</p>
+                    <div class="affection-bar">
+                        <div class="affection-fill" data-affection="rick-prime"></div>
+                        <span class="affection-text" data-affection-text="rick-prime">0%</span>
+                    </div>
+                </div>
+                
+                <div class="character-card" data-character="evil-morty">
+                    <div class="character-avatar">
+                        <img src="images/evil-morty.webp" alt="Evil Morty" class="character-image">
+                    </div>
+                    <h3>Evil Morty</h3>
+                    <p>The Morty who escaped the Central Finite Curve</p>
+                    <div class="affection-bar">
+                        <div class="affection-fill" data-affection="evil-morty"></div>
+                        <span class="affection-text" data-affection-text="evil-morty">0%</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="chat-container" id="chatContainer" style="display: none;">
+            <div class="chat-header">
+                <button class="back-btn" id="backBtn">← Back to Characters</button>
+                <div class="current-character">
+                    <span class="current-avatar" id="currentAvatar"></span>
+                    <span class="current-name" id="currentName"></span>
+                    <div class="current-affection">
+                        <div class="affection-bar small">
+                            <div class="affection-fill" id="currentAffectionFill"></div>
+                            <span class="affection-text" id="currentAffectionText">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="clear-btn" id="clearBtn">🗑️ Clear Chat</button>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages"></div>
+            
+            <div class="chat-input-container">
+                <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500">
+                <button id="sendBtn">Send</button>
+            </div>
+        </div>
+
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
