@@ -418,6 +418,14 @@ async function callChuteAI(message, character, affectionLevel, userId, character
 
       response.data.on('end', () => {
         console.log('Chute.ai stream ended. Full response content:', accumulatedContent);
+        // Stronger final cleanup for thinking messages
+        accumulatedContent = accumulatedContent.replace(/\*\*Thinking:\*\*.*?\*\*Answer:\*\*/gs, ''); // Remove old thinking pattern
+        accumulatedContent = accumulatedContent.replace(/<think>.*?<\/think>/gs, ''); // Remove XML-like thinking tags
+        accumulatedContent = accumulatedContent.replace(/thinking[:]?\s*\{.*?\}/g, ''); // Remove JSON-like thinking blocks
+        accumulatedContent = accumulatedContent.replace(/(?:^|\n)\s*thinking:.*?\n?/gi, ''); // Remove lines starting with 'thinking:'
+        accumulatedContent = accumulatedContent.replace(/(?:^|\n)\s*\(thinking\s*\.\.\.\).*?\n?/gi, ''); // Remove '(thinking...)' type lines
+        accumulatedContent = accumulatedContent.replace(/(?:^|\n)\s*\{.*?\}/gi, ''); // Remove any standalone json objects that could be thinking
+        accumulatedContent = accumulatedContent.replace(/^[\s\S]*?("|\*)/, ''); // Aggressively remove anything before the first quoted speech or action
         accumulatedContent = accumulatedContent.trim();
         
         resolve(accumulatedContent || "*burp* Let me think about that differently...");
