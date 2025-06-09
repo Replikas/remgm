@@ -381,20 +381,27 @@ async function callChuteAI(message, character, affectionLevel, userId, character
         const lines = decodedChunk.split('\n');
         for (let line of lines) {
           if (line.startsWith('data:')) {
-            let json = line.substring(5).trim();
+            let jsonString = line.substring(5).trim();
 
             // Aggressively remove narrative style guidelines and thinking before parsing
-            json = json.replace(/NARRATIVE STYLE GUIDELINES:[\s\S]*?(\\n\\n|$)/g, '').trim();
-            json = json.replace(/^.*?(?=\n\n[A-Z][a-z]|\n\n"|'|\n\n<)/s, '').trim(); // Remove any leading descriptive text before an action or speech
-            json = json.replace(/thinking[:]?\s*\{.*?\}/g, '').trim(); // Remove thinking blocks
-            json = json.replace(/\*\*Thinking:\*\*.*?\*\*Answer:\*\*/gs, '').trim();
-            json = json.replace(/<think>.*?<\/think>/gs, '').trim();
+            jsonString = jsonString.replace(/NARRATIVE STYLE GUIDELINES:[\s\S]*?(\\n\\n|$)/g, '').trim();
+            jsonString = jsonString.replace(/^.*?(?=\n\n[A-Z][a-z]|\n\n"|'|\n\n<)/s, '').trim(); // Remove any leading descriptive text before an action or speech
+            jsonString = jsonString.replace(/thinking[:]?\s*\{.*?\}/g, '').trim(); // Remove thinking blocks
+            jsonString = jsonString.replace(/\*\*Thinking:\*\*.*?\*\*Answer:\*\*/gs, '').trim();
+            jsonString = jsonString.replace(/<think>.*?<\/think>/gs, '').trim();
 
-            if (json === '[DONE]' || json === '') {
+            if (jsonString === '[DONE]' || jsonString === '') {
               continue;
             }
+
+            // Heuristic check: only attempt JSON.parse if it looks like an object or array
+            if (!jsonString.startsWith('{') && !jsonString.startsWith('[')) {
+              console.warn('Skipping non-JSON data line:', jsonString);
+              continue; // Skip lines that clearly aren't JSON
+            }
+
             try {
-              const parsed = JSON.parse(json);
+              const parsed = JSON.parse(jsonString);
               if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
                 const content = parsed.choices[0].delta.content;
                 // Skip thinking messages and any content that starts with "thinking"
@@ -403,7 +410,8 @@ async function callChuteAI(message, character, affectionLevel, userId, character
                 }
               }
             } catch (e) {
-              console.error('Error parsing JSON chunk (after pre-filtering):', e, 'Invalid JSON:', json);
+              console.error('Error parsing JSON chunk (after pre-filtering). Invalid JSON skipped:', e, 'Invalid JSON String:', jsonString);
+              // Do not append invalid JSON to accumulatedContent
             }
           }
         }
@@ -411,7 +419,6 @@ async function callChuteAI(message, character, affectionLevel, userId, character
 
       response.data.on('end', () => {
         console.log('Chute.ai stream ended. Full response content:', accumulatedContent);
-        // The primary cleaning is now done during the stream processing, but a final trim is safe
         accumulatedContent = accumulatedContent.trim();
         
         resolve(accumulatedContent || "*burp* Let me think about that differently...");
