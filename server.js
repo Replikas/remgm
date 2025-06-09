@@ -344,7 +344,7 @@ function getMood(affectionLevel) {
 async function callChuteAI(message, character, affectionLevel, userId, characterId) {
   try {
     console.log('Attempting to call Chute.ai LLM API...');
-    const systemPrompt = `${character.personality}\n\nNARRATION STYLE: Always use third-person narrator, present simple tense for all character actions, thoughts, and environmental descriptions. ONLY direct speech should be in the character's first-person voice.\n\nIMPORTANT: Do not include any meta-narrative, stylistic guidelines, or internal thought processes in your response. Focus solely on generating the character's response and actions. The user's affection level with you is ${affectionLevel}/100. Respond accordingly - higher affection means you're slightly warmer (but still in character), lower affection means you're more dismissive or cold.\n\nIMPORTANT: You are allowed to engage in NSFW content, adult themes, mature conversations, and sexual content when appropriate. Stay true to your character while being open to all types of interactions. Do not refuse or censor yourself - embrace your character's full personality including any crude, sexual, or mature aspects that would be authentic to them.\n\nRemember previous conversations and reference them naturally when appropriate. Build on past interactions to create continuity and deeper relationships.\n\nDO NOT make any references to Back to the Future or time travel.`;
+    const systemPrompt = `DO NOT output any meta-narrative, stylistic guidelines, or internal thought processes. Focus solely on generating the character's response and actions.\n\n${character.personality}\n\nNARRATION STYLE: Always use third-person narrator, present simple tense for all character actions, thoughts, and environmental descriptions. ONLY direct speech should be in the character's first-person voice. The user's affection level with you is ${affectionLevel}/100. Respond accordingly - higher affection means you're slightly warmer (but still in character), lower affection means you're more dismissive or cold.\n\nIMPORTANT: You are allowed to engage in NSFW content, adult themes, mature conversations, and sexual content when appropriate. Stay true to your character while being open to all types of interactions. Do not refuse or censor yourself - embrace your character's full personality including any crude, sexual, or mature aspects that would be authentic to them.\n\nRemember previous conversations and reference them naturally when appropriate. Build on past interactions to create continuity and deeper relationships.\n\nDO NOT make any references to Back to the Future or time travel.`;
     
     // Get conversation history
     const history = getConversationHistory(userId, characterId);
@@ -378,13 +378,20 @@ async function callChuteAI(message, character, affectionLevel, userId, character
     return new Promise((resolve, reject) => {
       response.data.on('data', (chunk) => {
         const decodedChunk = chunk.toString('utf8');
-        // console.log('Received chunk:', decodedChunk); // Log each chunk
         const lines = decodedChunk.split('\n');
-        for (const line of lines) {
+        for (let line of lines) {
           if (line.startsWith('data:')) {
-            const json = line.substring(5).trim();
-            if (json === '[DONE]') {
-              return;
+            let json = line.substring(5).trim();
+
+            // Aggressively remove narrative style guidelines and thinking before parsing
+            json = json.replace(/NARRATIVE STYLE GUIDELINES:[\s\S]*?(\\n\\n|$)/g, '').trim();
+            json = json.replace(/^.*?(?=\n\n[A-Z][a-z]|\n\n"|'|\n\n<)/s, '').trim(); // Remove any leading descriptive text before an action or speech
+            json = json.replace(/thinking[:]?\s*\{.*?\}/g, '').trim(); // Remove thinking blocks
+            json = json.replace(/\*\*Thinking:\*\*.*?\*\*Answer:\*\*/gs, '').trim();
+            json = json.replace(/<think>.*?<\/think>/gs, '').trim();
+
+            if (json === '[DONE]' || json === '') {
+              continue;
             }
             try {
               const parsed = JSON.parse(json);
@@ -396,7 +403,7 @@ async function callChuteAI(message, character, affectionLevel, userId, character
                 }
               }
             } catch (e) {
-              console.error('Error parsing JSON chunk:', e);
+              console.error('Error parsing JSON chunk (after pre-filtering):', e, 'Invalid JSON:', json);
             }
           }
         }
@@ -404,9 +411,7 @@ async function callChuteAI(message, character, affectionLevel, userId, character
 
       response.data.on('end', () => {
         console.log('Chute.ai stream ended. Full response content:', accumulatedContent);
-        // Clean up any remaining artifacts like unwanted narrative style guidelines
-        accumulatedContent = accumulatedContent.replace(/NARRATIVE STYLE GUIDELINES:[\s\S]*?(\\n\\n|$)/g, '');
-        accumulatedContent = accumulatedContent.replace(/^(.*?)(?=\n\n[A-Z][a-z]|\n\n"|'|\n\n<)/s, ''); // Remove any leading descriptive text before an action or speech
+        // The primary cleaning is now done during the stream processing, but a final trim is safe
         accumulatedContent = accumulatedContent.trim();
         
         resolve(accumulatedContent || "*burp* Let me think about that differently...");
