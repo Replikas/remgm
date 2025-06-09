@@ -150,17 +150,13 @@ function sendMessage() {
 }
 
 function formatMarkdown(text) {
-    // Convert markdown-style formatting to HTML
-    // Speech: text within double quotes becomes bold
+    // 1. Speech: text within double quotes becomes bold
     text = text.replace(/"(.*?)"/g, '<strong>"$1"</strong>');
-    // Actions: text within single asterisks becomes italic
+    // 2. Actions: text within single asterisks becomes italic
     text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    // Existing rules (ensure they don't conflict or are removed if redundant)
+
+    // Other standard markdown rules (less likely to conflict with the primary rules)
     return text
-        .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>') // Bold + Italic
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold (will apply if not caught by speech quotes)
-        .replace(/_(.*?)_/g, '<em>$1</em>') // Italic with underscores
         .replace(/~~(.*?)~~/g, '<del>$1</del>') // Strikethrough
         .replace(/`(.*?)`/g, '<code>$1</code>') // Inline code
         .replace(/\n/g, '<br>'); // Line breaks
