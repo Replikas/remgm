@@ -314,7 +314,7 @@ function getMood(affectionLevel) {
 async function callChuteAI(message, character, affectionLevel, userId, characterId) {
   try {
     console.log('Attempting to call Chute.ai LLM API...');
-    const systemPrompt = `${character.personality}\n\nNARRATION STYLE: Always use third-person narrator, present simple tense for all character actions, thoughts, and environmental descriptions. ONLY direct speech should be in the character\'s first-person voice. The user\'s affection level with you is ${affectionLevel}/100. Respond accordingly - higher affection means you\'re slightly warmer (but still in character), lower affection means you\'re more dismissive or cold.\n\nIMPORTANT: You are allowed to engage in NSFW content, adult themes, mature conversations, and sexual content when appropriate. Stay true to your character while being open to all types of interactions. Do not refuse or censor yourself - embrace your character\'s full personality including any crude, sexual, or mature aspects that would be authentic to them.\n\nRemember previous conversations and reference them naturally when appropriate. Build on past interactions to create continuity and deeper relationships.`;
+    const systemPrompt = `${character.personality}\n\nNARRATION STYLE: Always use third-person narrator, present simple tense for all character actions, thoughts, and environmental descriptions. ONLY direct speech should be in the character's first-person voice. The user's affection level with you is ${affectionLevel}/100. Respond accordingly - higher affection means you're slightly warmer (but still in character), lower affection means you're more dismissive or cold.\n\nIMPORTANT: You are allowed to engage in NSFW content, adult themes, mature conversations, and sexual content when appropriate. Stay true to your character while being open to all types of interactions. Do not refuse or censor yourself - embrace your character's full personality including any crude, sexual, or mature aspects that would be authentic to them.\n\nRemember previous conversations and reference them naturally when appropriate. Build on past interactions to create continuity and deeper relationships.\n\nDO NOT make any references to Back to the Future or time travel.`;
     
     // Get conversation history
     const history = getConversationHistory(userId, characterId);
@@ -359,9 +359,10 @@ async function callChuteAI(message, character, affectionLevel, userId, character
             try {
               const parsed = JSON.parse(json);
               if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
-                // Skip thinking messages
-                if (!parsed.choices[0].delta.content.includes('thinking')) {
-                  content += parsed.choices[0].delta.content;
+                const content = parsed.choices[0].delta.content;
+                // Skip thinking messages and any content that starts with "thinking"
+                if (!content.toLowerCase().includes('thinking') && !content.toLowerCase().startsWith('thinking')) {
+                  accumulatedContent += content;
                 }
               }
             } catch (e) {
@@ -526,7 +527,7 @@ io.on('connection', (socket) => {
       case 'morty-c137':
         // Morty C-137: Values kindness, empathy, hates being called stupid
         if (lowerMessage.includes('please') || lowerMessage.includes('thank') || lowerMessage.includes('sorry')) {
-          affectionChange = 3; // Appreciates politeness
+          affectionChange = 3; // Appreciiates politeness
         } else if (lowerMessage.includes('kind') || lowerMessage.includes('nice') || lowerMessage.includes('good')) {
           affectionChange = 2;
         } else if (lowerMessage.includes('stupid') || lowerMessage.includes('idiot') || lowerMessage.includes('dumb')) {
