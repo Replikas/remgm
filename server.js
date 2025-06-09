@@ -27,6 +27,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Health check endpoint for Render
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // Initialize Socket.IO
 const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
