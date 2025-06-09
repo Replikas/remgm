@@ -340,6 +340,20 @@ function getMood(affectionLevel) {
   }
 }
 
+function getAcquaintanceLevel(affectionLevel) {
+  if (affectionLevel >= 90) {
+    return 'Lover';
+  } else if (affectionLevel >= 70) {
+    return 'Close Friend';
+  } else if (affectionLevel >= 40) {
+    return 'Friend';
+  } else if (affectionLevel >= 20) {
+    return 'Acquaintance';
+  } else {
+    return 'Stranger';
+  }
+}
+
 // Call Chute.ai API
 async function callChuteAI(message, character, affectionLevel, userId, characterId) {
   try {
@@ -610,6 +624,7 @@ io.on('connection', (socket) => {
       affection: newAffection,
       affectionChange: affectionChange,
       mood: mood,
+      acquaintanceLevel: getAcquaintanceLevel(newAffection),
     });
     
     // Send updated affection levels

@@ -171,7 +171,7 @@ function addMessage(content, type, characterInfo = null) {
         
         // Create affection footer if affection data is available
         let affectionFooter = '';
-        if (characterInfo.affection !== undefined && characterInfo.mood && characterInfo.affectionChange !== undefined) {
+        if (characterInfo.affection !== undefined && characterInfo.mood && characterInfo.affectionChange !== undefined && characterInfo.acquaintanceLevel !== undefined) {
             const changeText = characterInfo.affectionChange > 0 ? `+${characterInfo.affectionChange}` : characterInfo.affectionChange.toString();
             const changeColor = characterInfo.affectionChange > 0 ? '#4CAF50' : characterInfo.affectionChange < 0 ? '#f44336' : '#9E9E9E';
             
@@ -180,6 +180,7 @@ function addMessage(content, type, characterInfo = null) {
                     <span class="mood">Mood: ${characterInfo.mood}</span>
                     <span class="affection-change" style="color: ${changeColor}">Affection: ${changeText}</span>
                     <span class="affection-points">Points: ${characterInfo.affection}/100</span>
+                    <span class="acquaintance-level">Level: ${characterInfo.acquaintanceLevel}</span>
                 </div>
             `;
         }
@@ -278,6 +279,7 @@ socket.on('ai-response', (data) => {
         affection: data.affection,
         affectionChange: data.affectionChange,
         mood: data.mood,
+        acquaintanceLevel: data.acquaintanceLevel,
     });
     updateCurrentAffection();
 });
