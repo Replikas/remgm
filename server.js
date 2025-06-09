@@ -383,8 +383,7 @@ async function callChuteAI(message, character, affectionLevel, userId, character
           if (line.startsWith('data:')) {
             let jsonString = line.substring(5).trim();
 
-            // Aggressively remove narrative style guidelines and thinking before parsing
-            jsonString = jsonString.replace(/NARRATIVE STYLE GUIDELINES:[\s\S]*?(\\n\\n|$)/g, '').trim();
+            // Aggressively remove thinking parts before parsing
             jsonString = jsonString.replace(/^.*?(?=\n\n[A-Z][a-z]|\n\n"|'|\n\n<)/s, '').trim(); // Remove any leading descriptive text before an action or speech
             jsonString = jsonString.replace(/thinking[:]?\s*\{.*?\}/g, '').trim(); // Remove thinking blocks
             jsonString = jsonString.replace(/\*\*Thinking:\*\*.*?\*\*Answer:\*\*/gs, '').trim();
