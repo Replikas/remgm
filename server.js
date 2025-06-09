@@ -1,20 +1,45 @@
 const express = require('express');
-const http = require('http');
 const socketIo = require('socket.io');
 const axios = require('axios');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+const { Readable } = require('stream');
+const { v4: uuidv4 } = require('uuid');
+const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
+const port = process.env.PORT || 3000;
 
-const PORT = process.env.PORT || 3001;
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
+
+// Serve the main page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Initialize Socket.IO
+const server = app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
 const LLM_MODEL = 'deepseek-ai/DeepSeek-R1-0528';
-
-// Serve static files
-app.use(express.static('public'));
-app.use(express.json());
 
 // Character configurations
 const characters = {
@@ -571,8 +596,4 @@ io.on('connection', (socket) => {
 // API endpoint to get characters
 app.get('/api/characters', (req, res) => {
   res.json(characters);
-});
-
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
 });
