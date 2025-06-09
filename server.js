@@ -373,7 +373,7 @@ async function callChuteAI(message, character, affectionLevel, userId, character
       responseType: 'stream' // Crucial for handling streaming responses
     });
 
-    let content = '';
+    let accumulatedContent = ''; // Declare accumulatedContent here
     // Handle streaming response using events
     return new Promise((resolve, reject) => {
       response.data.on('data', (chunk) => {
@@ -403,8 +403,8 @@ async function callChuteAI(message, character, affectionLevel, userId, character
       });
 
       response.data.on('end', () => {
-        console.log('Chute.ai stream ended. Full response content:', content);
-        resolve(content || "*burp* Let me think about that differently...");
+        console.log('Chute.ai stream ended. Full response content:', accumulatedContent);
+        resolve(accumulatedContent || "*burp* Let me think about that differently...");
       });
 
       response.data.on('error', (err) => {
